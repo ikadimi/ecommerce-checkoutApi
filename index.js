@@ -34,13 +34,13 @@ app.use(cors({
 // Checkout Process
 app.post('/', async (req, res) => {
   try {
-    console.log('checkout biii')
     const userId = req.headers['x-user-id'];
-    const { shippingAddress, paymentMethod } = req.body;
+    const { deliveryAddress, paymentMethod } = req.body;
     const headers = {
       'x-user-id': userId
     }
     // 1. Retrieve user's cart
+    console.log('checkout biii', userId, deliveryAddress, paymentMethod)
     
     const cartResponse = await axios.get(CART_API_URL, { headers });
     const cart = cartResponse.data;
@@ -49,7 +49,7 @@ app.post('/', async (req, res) => {
     }
 
     // 2. Validate Shipping Address
-    if (!shippingAddress) {
+    if (!deliveryAddress) {
       return res.status(400).json({ message: 'Invalid shipping address' });
     }
 
@@ -63,7 +63,7 @@ app.post('/', async (req, res) => {
     const order = new Order({
       userId,
       items: cart.items,
-      shippingAddress,
+      deliveryAddress,
       paymentStatus: 'Paid',
       totalPrice: cart.totalPrice,
       status: 'Processing'
