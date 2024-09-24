@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const Order = require('./models/order.model');
 const PaymentService = require('./services/paymentService'); // Integrate with a payment provider
@@ -7,7 +8,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 
-const CART_API_URL = 'http://localhost:3002';
+const CART_API_URL = process.env.CART_API_URL;
 
 const app = express();
 app.use(cookieParser());
@@ -20,7 +21,7 @@ app.use((req, res, next) => {
   });
 app.use(cors({
   credentials: true,
-  origin: 'http://localhost:4200'
+  origin: process.env.CLIENT_URL
 }));
 
 // app.post('/deliveryAddress', async (req, res) => {
@@ -39,8 +40,6 @@ app.post('/', async (req, res) => {
     const headers = {
       'x-user-id': userId
     }
-    // 1. Retrieve user's cart
-    console.log('checkout biii', userId, deliveryAddress, paymentMethod)
     
     const cartResponse = await axios.get(CART_API_URL, { headers });
     const cart = cartResponse.data;
@@ -94,11 +93,11 @@ app.post('/', async (req, res) => {
   }
 });
 
-const url = 'mongodb://localhost:27017';
-const dbName = 'ecommerce';
+const url = process.env.DB_URL;
+const dbName = process.env.DB_NAME;
 mongoose.connect(`${url}/${dbName}`)
 .then(() => console.log('Connected to MongoDB'))
 .catch(err => console.error('MongoDB connection error:', err));
 
-const PORT = 3004;
+const PORT = process.env.PORT;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
