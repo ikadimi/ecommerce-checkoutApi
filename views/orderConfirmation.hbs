@@ -1,0 +1,40 @@
+<!-- views/orderConfirmation.hbs -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Order Confirmation</title>
+</head>
+<body>
+  <h1>Order Confirmation</h1>
+  <p>Dear {{customerName}},</p>
+  <p>Thank you for your order!</p>
+  <p>Your order number is <strong>{{orderNumber}}</strong>.</p>
+  <p>Order Date: {{orderDate}}</p>
+
+  <h2>Order Details</h2>
+  <ul>
+    {{#each items}}
+      <li>{{this.name}} (Quantity: {{this.quantity}}) - ${{this.price}}</li>
+    {{/each}}
+  </ul>
+
+  <p><strong>Total Amount:</strong> ${{totalPrice}}</p>
+
+  <h2>Delivery Information</h2>
+  <p><strong>Delivery Address:</strong></p>
+  <p>
+    {{deliveryAddress.name}}<br>
+    {{deliveryAddress.address}}<br>
+    {{deliveryAddress.city}}, {{deliveryAddress.postalCode}}, {{deliveryAddress.country}}
+  </p>
+
+  <p>If you have any questions, feel free to contact our support team at <a href="mailto:support@example.com">support@example.com</a>.</p>
+
+  <p>Thank you for shopping with us!</p>
+
+  <footer>
+    <p>Follow us on <a href="#">Facebook</a> | <a href="#">Twitter</a></p>
+    <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a></p>
+  </footer>
+</body>
+</html>

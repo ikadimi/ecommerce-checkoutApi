@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const amqp = require('amqplib');
 const Order = require('./models/order.model');
 const PaymentService = require('./services/paymentService'); // Integrate with a payment provider
 
@@ -9,6 +10,7 @@ const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 
 const CART_API_URL = process.env.CART_API_URL;
+const AUTH_API_URL = process.env.AUTH_API_URL;
 
 const app = express();
 app.use(cookieParser());
@@ -32,6 +34,33 @@ app.use(cors({
 
 // });
 
+
+async function publishEmail(mail) {
+  try {
+    console.log('Sending email request to queue...');
+    const connection = await amqp.connect(process.env.RABBITMQ_URL);
+    const channel = await connection.createChannel();
+    const queue = 'email_queue';
+
+    await channel.assertQueue(queue, { durable: true });
+    channel.sendToQueue(queue, Buffer.from(JSON.stringify(mail)), { persistent: true });
+
+    console.log('Email request sent to queue');
+    await channel.close();
+    await connection.close();
+  } catch (error) {
+    console.error('Failed to send email request to queue:', error);
+  }
+}
+
+function generateOrderConfirmationMail(order, user) {
+  return {
+    to: user.email,
+    subject: 'Order Confirmation',
+    html: `Thank you for your order. Your order ID is ${order._id}.`
+  }
+}
+
 // Checkout Process
 app.post('/', async (req, res) => {
   try {
@@ -39,8 +68,9 @@ app.post('/', async (req, res) => {
     const { deliveryAddress, paymentMethod } = req.body;
     const headers = {
       'x-user-id': userId
-    }
+    };
     
+    // 1. Retrieve the cart
     const cartResponse = await axios.get(CART_API_URL, { headers });
     const cart = cartResponse.data;
     if (!cart || cart.items.length === 0) {
@@ -78,7 +108,12 @@ app.post('/', async (req, res) => {
     }
 
     // 6. Send Order Confirmation Email
-    // TODO: Send email
+    const userResponse = await axios.get(`${AUTH_API_URL}/user/${userId}`); // Assuming you have a User model to retrieve user info
+    const user = userResponse.data;
+
+    if (user && user.email) {
+      await publishEmail(generateOrderConfirmationMail(order, user)); // Pass user email
+    }
 
     // 7. Return response to client
     res.status(200).json({
@@ -92,6 +127,7 @@ app.post('/', async (req, res) => {
     res.status(500).json({ message: 'Checkout failed', error: error.message });
   }
 });
+
 
 const url = process.env.DB_URL;
 const dbName = process.env.DB_NAME;
